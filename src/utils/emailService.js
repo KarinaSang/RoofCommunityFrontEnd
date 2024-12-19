@@ -1,6 +1,6 @@
 import axios from "axios";
 import emailjs from "@emailjs/browser";
-//import { uploadImageToImgBB } from "./qrHelper"; // Assuming qrHelper contains the ImgBB upload function
+import { uploadImageToImgBB } from "./qrHelper"; // Assuming qrHelper contains the ImgBB upload function
 
 export const generateAndFetchQRCode = async (user) => {
     try {
@@ -17,8 +17,15 @@ export const generateAndFetchQRCode = async (user) => {
             });
 
         const base64QRCode = response?.data?.qrCodeUrl;
-        
-        return base64QRCode;
+
+        if (base64QRCode?.startsWith("data:image/png;base64,")) {
+            const uploadedUrl = await uploadImageToImgBB(base64QRCode);
+            console.log("upload url " + uploadedUrl);
+            return uploadedUrl;
+        }
+
+        console.error("QR code generation failed or invalid format.");
+        return null;
     } catch (error) {
         console.error("Error generating QR code:", error);
         return null;
@@ -29,7 +36,7 @@ export const generateMultipleQRCodes = async (userGroup) => {
     const qrCodes = Array(10).fill(false);
     for (let i = 0; i < userGroup.length; i++) {
         const qrCodeUrl = await generateAndFetchQRCode(userGroup[i]);
-            qrCodes[i] = qrCodeUrl;
+        qrCodes[i] = qrCodeUrl;
     }
     return qrCodes;
 };
@@ -40,7 +47,7 @@ export const sendEmail = async (user, qrCode) => {
     }
 
     if (qrCode === null) {
-        console.error('Failed to generate QR code');
+        console.error("Failed to generate QR code");
         return false;
     }
 
@@ -105,11 +112,11 @@ export const sendEmailMulti = async (userGroup, qrCodes) => {
 
     try {
         const response = await emailjs.send(
-            "service_iezoxjs",
-            "template_oallnpj",
+            "service_48jph9s",
+            "template_laqn78w",
             templateParams,
             {
-                publicKey: "K457FRvU7kf6UNt5O",
+                publicKey: "d0frZQtRg__lupUwd",
             }
         );
         console.log("Email successfully sent!", response);

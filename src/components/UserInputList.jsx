@@ -4,13 +4,19 @@ import { Button, IconButton, Surface } from "react-native-paper";
 import MyTextInput from "./MyTextInput";
 
 const UserInputList = ({ users, setUsers, scrollViewRef }) => {
+    const screenHeight = Dimensions.get("window").height;
     const screenWidth = Dimensions.get("window").width;
+    const inputHeight = 500;
 
     const handleAddField = () => {
         if (users.length < 9) {
             setUsers([...users, { firstName: "", lastName: "" }]);
             setTimeout(() => {
-                scrollViewRef.current.scrollToEnd({ animated: true });
+                const newPosition = inputHeight * users.length + inputHeight / 2 - screenHeight / 2;
+                scrollViewRef.current.scrollTo({
+                    y: newPosition,
+                    animated: true,
+                });
             }, 100);
         }
     };
