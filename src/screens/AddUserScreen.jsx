@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View, ActivityIndicator, Text } from "react-native";
+import React, { useState, useRef } from "react";
+import {
+    ScrollView,
+    StyleSheet,
+    View,
+    ActivityIndicator,
+    Text,
+    KeyboardAvoidingView,
+    Platform
+} from "react-native";
 import { Button } from "react-native-paper";
 import UserInputList from "../components/UserInputList";
 import EmailInput from "../components/EmailInput";
@@ -12,6 +20,8 @@ const AddUserScreen = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    const scrollViewRef = useRef(null);
 
     const handleSubmit = async () => {
         setIsLoading(true); // Show spinner overlay
@@ -27,10 +37,18 @@ const AddUserScreen = () => {
     };
 
     return (
+        <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
         <View style={styles.screenContainer}>
-            <ScrollView contentContainerStyle={styles.container}>
+            <ScrollView
+                ref={scrollViewRef}
+                contentContainerStyle={styles.container}
+            >
                 <EmailInput email={email} setEmail={setEmail} />
-                <UserInputList users={users} setUsers={setUsers} />
+                <UserInputList users={users} setUsers={setUsers} scrollViewRef={scrollViewRef}/>
                 <Button
                     mode="contained"
                     onPress={handleSubmit}
@@ -54,6 +72,7 @@ const AddUserScreen = () => {
                 onClose={() => setModalVisible(false)}
             />
         </View>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -62,6 +81,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     container: {
+        flexGrow: 1,
         marginTop: 50,
         padding: 20,
         justifyContent: "flex-start",

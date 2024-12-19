@@ -1,6 +1,6 @@
 import axios from "axios";
 import emailjs from "@emailjs/browser";
-import { uploadImageToImgBB } from "./qrHelper"; // Assuming qrHelper contains the ImgBB upload function
+//import { uploadImageToImgBB } from "./qrHelper"; // Assuming qrHelper contains the ImgBB upload function
 
 export const generateAndFetchQRCode = async (user) => {
     try {
@@ -17,15 +17,8 @@ export const generateAndFetchQRCode = async (user) => {
             });
 
         const base64QRCode = response?.data?.qrCodeUrl;
-
-        if (base64QRCode?.startsWith("data:image/png;base64,")) {
-            const uploadedUrl = await uploadImageToImgBB(base64QRCode);
-            console.log('upload url ' +  uploadedUrl);
-            return uploadedUrl;
-        }
-
-        console.error("QR code generation failed or invalid format.");
-        return null;
+        
+        return base64QRCode;
     } catch (error) {
         console.error("Error generating QR code:", error);
         return null;
@@ -73,11 +66,11 @@ export const sendEmail = async (user, qrCode) => {
 
     try {
         const response = await emailjs.send(
-            "service_iezoxjs",
-            "template_oallnpj",
+            "service_48jph9s",
+            "template_laqn78w",
             templateParams,
             {
-                publicKey: "K457FRvU7kf6UNt5O",
+                publicKey: "d0frZQtRg__lupUwd",
             }
         );
         console.log("Email successfully sent!", response);
