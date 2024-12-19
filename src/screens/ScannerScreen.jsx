@@ -3,6 +3,7 @@ import { StyleSheet, View, ActivityIndicator, Text } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import CustomDialog from "../components/CustomDialog"; // Import the new dialog component
 import { scanQR } from "../utils/qrHelper"; // Import the QR scanning logic
+import { Button } from "react-native-paper";
 
 export default function ScannerScreen() {
     const [permission, requestPermission] = useCameraPermissions();
