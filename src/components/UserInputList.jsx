@@ -3,12 +3,15 @@ import { View, StyleSheet, Dimensions } from "react-native";
 import { Button, IconButton, Surface } from "react-native-paper";
 import MyTextInput from "./MyTextInput";
 
-const UserInputList = ({ users, setUsers }) => {
+const UserInputList = ({ users, setUsers, scrollViewRef }) => {
     const screenWidth = Dimensions.get("window").width;
 
     const handleAddField = () => {
         if (users.length < 9) {
             setUsers([...users, { firstName: "", lastName: "" }]);
+            setTimeout(() => {
+                scrollViewRef.current.scrollToEnd({ animated: true });
+            }, 100);
         }
     };
 
