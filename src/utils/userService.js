@@ -1,11 +1,11 @@
-import { collection, addDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, updateDoc, Timestamp } from "firebase/firestore";
 import db from "../api/firebase";
 import { generateMultipleQRCodes, sendEmailMulti } from "./emailService";
 
 export const submitUsers = async (users, email) => {
     if (
-        users.some((user) => !user.firstName.trim() || !user.lastName.trim()) ||
-        !email.trim()
+        users.some((user) => !user.firstName.trim() ||
+        !email.trim())
     ) {
         return { success: false, message: "All fields must be filled." };
     }
@@ -21,6 +21,8 @@ export const submitUsers = async (users, email) => {
             scannedStatus: false,
             ticketCount: ticketCount,
             ticketId: index + 1,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
         }));
 
         const qrCodes = await generateMultipleQRCodes(userGroup);

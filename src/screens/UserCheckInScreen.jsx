@@ -1,112 +1,96 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList, StyleSheet, TextInput } from "react-native";
-import { ToggleButton, useTheme } from "react-native-paper";
-import {
-    collection,
-    query,
-    onSnapshot,
-} from "firebase/firestore";
+import { View, FlatList } from "react-native";
+import { useTheme } from "react-native-paper";
+import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
 import db from "../api/firebase";
 import UserScanStatusCard from "../components/UserScanStatusCard";
-import MyModal from "../components/MyModal";
+import SuccessModal from "../components/SuccessModal";
+import ErrorModal from "../components/ErrorModal";
+import SearchAndFilter from "../components/SearchAndFilter";
 
 function UserCheckInScreen() {
     const [users, setUsers] = useState([]);
-    const [filter, setFilter] = useState("all"); // Filter state
-    const [searchQuery, setSearchQuery] = useState(""); // Search state
+    const [filter, setFilter] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
     const theme = useTheme();
     const styles = makeStyles(theme);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
+    const [modalType, setModalType] = useState("success");
 
     useEffect(() => {
-        const unsubscribe = onSnapshot(
+        const usersQuery = query(
             collection(db, "users"),
-            (querySnapshot) => {
-                const usersArray = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setUsers(usersArray);
-            }
+            orderBy("createdAt"),
+            orderBy("ticketId")
         );
+        const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
+            const usersArray = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setUsers(usersArray);
+        });
 
         return () => unsubscribe();
     }, []);
 
-    // Filter users based on filter criteria and search query
     const filteredUsers = users.filter((user) => {
         const matchesFilter =
-            (filter === "checkedIn" && user.scannedStatus === true) ||
-            (filter === "notCheckedIn" && user.scannedStatus === false) ||
+            (filter === "checkedIn" && user.scannedStatus) ||
+            (filter === "notCheckedIn" && !user.scannedStatus) ||
             filter === "all";
-
         const matchesSearch =
             user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.email.toLowerCase().includes(searchQuery.toLowerCase());
-
         return matchesFilter && matchesSearch;
     });
 
     return (
         <View style={styles.container}>
-            {/* Search Bar */}
-            <TextInput
-                style={styles.searchBar}
-                placeholder="Search by name or email"
-                value={searchQuery}
-                onChangeText={(text) => setSearchQuery(text)}
+            <SearchAndFilter
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filter={filter}
+                setFilter={setFilter}
+                itemCount={filteredUsers.length}
             />
-
-            {/* Filter Toggle */}
-            <View style={styles.filterContainer}>
-                <ToggleButton.Row
-                    onValueChange={(value) => setFilter(value)}
-                    value={filter}
-                >
-                    <ToggleButton icon="account-group" value="all" />
-                    <ToggleButton icon="check" value="checkedIn" />
-                    <ToggleButton icon="close" value="notCheckedIn" />
-                </ToggleButton.Row>
-            </View>
-
-            {/* User List */}
             <FlatList
                 data={filteredUsers}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <UserScanStatusCard user={item} />}
+                renderItem={({ item }) => (
+                    <UserScanStatusCard
+                        user={item}
+                        handleSuccess={() => {}}
+                        handleError={() => {}}
+                    />
+                )}
             />
-            <MyModal
-                visible={modalVisible}
-                message={modalMessage}
-                onClose={() => setModalVisible(false)}
-            />
+            {modalType === "success" ? (
+                <SuccessModal
+                    visible={modalVisible}
+                    title="Success"
+                    message={modalMessage}
+                    onClose={() => setModalVisible(false)}
+                />
+            ) : (
+                <ErrorModal
+                    visible={modalVisible}
+                    title="Error"
+                    message={modalMessage}
+                    onClose={() => setModalVisible(false)}
+                />
+            )}
         </View>
     );
 }
 
-const makeStyles = (theme) => {
-    const primaryColor = theme?.colors?.primary || "#6200ee"; // Default fallback color
-    return StyleSheet.create({
-        container: {
-            flex: 1,
-            marginTop: "20%",
-            padding: 20,
-        },
-        searchBar: {
-            borderColor: primaryColor, // Use the primary color from theme or fallback
-            borderWidth: 1,
-            padding: 10,
-            marginBottom: 10,
-            borderRadius: 5,
-        },
-        filterContainer: {
-            flexDirection: "row",
-            justifyContent: "space-around",
-            marginBottom: 20,
-        },
-    });
-};
+const makeStyles = (theme) => ({
+    container: {
+        flex: 1,
+        padding: 20,
+    },
+});
 
 export default UserCheckInScreen;

@@ -1,14 +1,14 @@
+import React, { forwardRef } from 'react';
 import { TextInput } from "react-native-paper";
 
-const MyTextInput = ({ label, text, onChangeText }) => {
-    return (
-        <TextInput
-            label={label}
-            value={text}
-            onChangeText={onChangeText}
-            style = {{marginBottom: 20,}}
-        />
-    );
-};
+const MyTextInput = forwardRef((props, ref) => (
+    <TextInput
+        ref={ref}
+        onChangeText={props.onChangeText}
+        value={props.value}
+        placeholder={props.label}
+        style={props.style}
+    />
+));
 
 export default MyTextInput;

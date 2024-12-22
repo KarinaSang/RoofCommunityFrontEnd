@@ -1,25 +1,21 @@
-import React from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
-import { Button, IconButton, Surface } from "react-native-paper";
+import React, { useRef, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+import { IconButton, Surface } from "react-native-paper";
 import MyTextInput from "./MyTextInput";
 
-const UserInputList = ({ users, setUsers, scrollViewRef }) => {
-    const screenHeight = Dimensions.get("window").height;
-    const screenWidth = Dimensions.get("window").width;
-    const inputHeight = 500;
+const UserInputList = ({ users, setUsers }) => {
+    const inputRefs = useRef([]);
 
-    const handleAddField = () => {
-        if (users.length < 9) {
-            setUsers([...users, { firstName: "", lastName: "" }]);
+    useEffect(() => {
+        // Adjust the refs array to match the number of users
+        inputRefs.current = inputRefs.current.slice(0, users.length);
+        if (users.length > 0) {
+            // Automatically focus the first name of the last added user
             setTimeout(() => {
-                const newPosition = inputHeight * users.length + inputHeight / 2 - screenHeight / 2;
-                scrollViewRef.current.scrollTo({
-                    y: newPosition,
-                    animated: true,
-                });
+                inputRefs.current[(users.length - 1) * 2]?.focus();
             }, 100);
         }
-    };
+    }, [users]);
 
     const handleRemoveField = (index) => {
         setUsers(users.filter((_, i) => i !== index));
@@ -31,8 +27,13 @@ const UserInputList = ({ users, setUsers, scrollViewRef }) => {
         setUsers(updatedUsers);
     };
 
+    const handleFocus = (index) => {
+        // Update the ref on focus to ensure it's pointing to the correct element
+        inputRefs.current[index] = inputRefs.current[index] || {};
+    };
+
     return (
-        <View>
+        <View style={{ marginBottom: 10 }}>
             {users.map((user, index) => (
                 <View key={index}>
                     {index > 0 && (
@@ -44,39 +45,30 @@ const UserInputList = ({ users, setUsers, scrollViewRef }) => {
                     )}
                     <Surface style={styles.surface} elevation={4}>
                         <MyTextInput
+                            ref={(el) => (inputRefs.current[index * 2] = el)}
                             onChangeText={(value) =>
                                 handleInputChange(index, "firstName", value)
                             }
-                            text={user.firstName}
+                            value={user.firstName}
                             label={`First Name ${index + 1}`}
-                            style={[
-                                styles.input,
-                                { width: screenWidth * 0.45 },
-                            ]}
+                            style={styles.input}
+                            onFocus={() => handleFocus(index)}
                         />
                         <MyTextInput
+                            ref={(el) =>
+                                (inputRefs.current[index * 2 + 1] = el)
+                            }
                             onChangeText={(value) =>
                                 handleInputChange(index, "lastName", value)
                             }
-                            text={user.lastName}
+                            value={user.lastName}
                             label={`Last Name ${index + 1}`}
-                            style={[
-                                styles.input,
-                                { width: screenWidth * 0.45 },
-                            ]}
+                            style={styles.input}
+                            onFocus={() => handleFocus(index)}
                         />
                     </Surface>
                 </View>
             ))}
-            {users.length < 9 && (
-                <Button
-                    mode="outlined"
-                    onPress={handleAddField}
-                    style={styles.addButton}
-                >
-                    Add User
-                </Button>
-            )}
         </View>
     );
 };

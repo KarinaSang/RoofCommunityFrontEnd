@@ -1,22 +1,28 @@
 import React, { useState, useRef } from "react";
 import { StyleSheet, View, ActivityIndicator, Text } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import CustomDialog from "../components/CustomDialog"; // Import the new dialog component
+import SuccessModal from "../components/SuccessModal";
+import ErrorModal from "../components/ErrorModal";
 import { scanQR } from "../utils/qrHelper"; // Import the QR scanning logic
 import { Button } from "react-native-paper";
 
 export default function ScannerScreen() {
     const [permission, requestPermission] = useCameraPermissions();
     const [loading, setLoading] = useState(false);
-    const [dialogVisible, setDialogVisible] = useState(false);
-    const [dialogMessage, setDialogMessage] = useState("");
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(true); // To differentiate between success and error modals
     const lastScannedTimestampRef = useRef(0);
 
     const handleBarCodeScanned = async ({ type, data }) => {
         const timestamp = Date.now();
 
-        // Prevent scanning if loading or dialog is visible
-        if (loading || dialogVisible || timestamp - lastScannedTimestampRef.current < 2000) {
+        // Prevent scanning if loading or modal is visible
+        if (
+            loading ||
+            modalVisible ||
+            timestamp - lastScannedTimestampRef.current < 2000
+        ) {
             return;
         }
 
@@ -24,26 +30,32 @@ export default function ScannerScreen() {
         console.log("NEW code scanned");
 
         setLoading(true);
-        const user = JSON.parse(data);
 
         try {
-            const message = await scanQR(user); // Call the helper function
+            const message = await scanQR(JSON.parse(data)); // Assume data is JSON string
             console.log(message);
-            setDialogMessage(message);
+            setModalMessage(message);
+
+            if (message === 'User not found') {
+                setIsSuccess(false);
+            } else {
+                setIsSuccess(true);
+            }
         } catch (error) {
-            setDialogMessage("An error occurred during scanning");
-            console.error(error);
+            console.error("Scanning error:", error);
+            setModalMessage("An error occurred during scanning");
+            setIsSuccess(false); // Set as error message
         } finally {
             setLoading(false);
-            setDialogVisible(true); // Show dialog after scan
+            setModalVisible(true); // Show modal after scan
         }
     };
 
-    const closeDialog = () => {
-        setDialogVisible(false);
+    const closeModal = () => {
+        setModalVisible(false);
 
         // Add a 2-second delay before allowing another scan
-        lastScannedTimestampRef.current = Date.now() + 2000; // Delay scanning by 2 seconds
+        lastScannedTimestampRef.current = Date.now() + 2000;
     };
 
     if (!permission) return <View />;
@@ -69,13 +81,21 @@ export default function ScannerScreen() {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            {/* Reusable Dialog */}
-            <CustomDialog
-                visible={dialogVisible}
-                title="Scan Result"
-                message={dialogMessage}
-                onClose={closeDialog}
-            />
+            {isSuccess ? (
+                <SuccessModal
+                    visible={modalVisible}
+                    title="Scan Result"
+                    message={modalMessage}
+                    onClose={closeModal}
+                />
+            ) : (
+                <ErrorModal
+                    visible={modalVisible}
+                    title="Scan Error"
+                    message={modalMessage}
+                    onClose={closeModal}
+                />
+            )}
         </View>
     );
 }

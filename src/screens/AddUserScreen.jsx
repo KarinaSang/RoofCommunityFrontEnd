@@ -6,72 +6,87 @@ import {
     ActivityIndicator,
     Text,
     KeyboardAvoidingView,
-    Platform
+    Platform,
 } from "react-native";
-import { Button } from "react-native-paper";
+import { Button as PaperButton } from "react-native-paper";
 import UserInputList from "../components/UserInputList";
 import EmailInput from "../components/EmailInput";
-import MyModal from "../components/MyModal";
+import SuccessModal from "../components/SuccessModal";
+import ErrorModal from "../components/ErrorModal";
 import { submitUsers } from "../utils/userService";
 
 const AddUserScreen = () => {
     const [users, setUsers] = useState([{ firstName: "", lastName: "" }]);
     const [email, setEmail] = useState("");
-    const [modalVisible, setModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const scrollViewRef = useRef(null);
+    const handleAddUser = () => {
+        setUsers([...users, { firstName: "", lastName: "" }]);
+    };
 
     const handleSubmit = async () => {
-        setIsLoading(true); // Show spinner overlay
+        setIsLoading(true);
         const { success, message } = await submitUsers(users, email);
+        setIsLoading(false);
         setModalMessage(message);
-        setModalVisible(true);
-        setIsLoading(false); // Hide spinner overlay
 
         if (success) {
+            setSuccessModalVisible(true);
             setUsers([{ firstName: "", lastName: "" }]);
             setEmail("");
+        } else {
+            setErrorModalVisible(true);
         }
     };
 
     return (
         <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
-        <View style={styles.screenContainer}>
-            <ScrollView
-                ref={scrollViewRef}
-                contentContainerStyle={styles.container}
-            >
-                <EmailInput email={email} setEmail={setEmail} />
-                <UserInputList users={users} setUsers={setUsers} scrollViewRef={scrollViewRef}/>
-                <Button
-                    mode="contained"
-                    onPress={handleSubmit}
-                    style={styles.submitButton}
-                >
-                    Submit
-                </Button>
-            </ScrollView>
-
-            {/* Overlay Spinner */}
-            {isLoading && (
-                <View style={styles.overlay}>
-                    <ActivityIndicator size="large" color="#6200EE" />
-                    <Text style={styles.loadingText}>Processing...</Text>
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+            <View style={styles.screenContainer}>
+                <ScrollView contentContainerStyle={styles.container}>
+                    <EmailInput email={email} setEmail={setEmail} />
+                    <UserInputList users={users} setUsers={setUsers} />
+                </ScrollView>
+                <View style={styles.buttonContainer}>
+                    <PaperButton
+                        mode="contained"
+                        onPress={handleAddUser}
+                        style={styles.addButton}
+                    >
+                        Add User
+                    </PaperButton>
+                    <PaperButton
+                        mode="outlined"
+                        onPress={handleSubmit}
+                        style={styles.submitButton}
+                    >
+                        Submit
+                    </PaperButton>
                 </View>
-            )}
-
-            <MyModal
-                visible={modalVisible}
-                message={modalMessage}
-                onClose={() => setModalVisible(false)}
-            />
-        </View>
+                {isLoading && (
+                    <View style={styles.overlay}>
+                        <ActivityIndicator size="large" color="#6200EE" />
+                        <Text style={styles.loadingText}>Processing...</Text>
+                    </View>
+                )}
+                <SuccessModal
+                    visible={successModalVisible}
+                    title="Success"
+                    message={modalMessage}
+                    onClose={() => setSuccessModalVisible(false)}
+                />
+                <ErrorModal
+                    visible={errorModalVisible}
+                    title="Error"
+                    message={modalMessage}
+                    onClose={() => setErrorModalVisible(false)}
+                />
+            </View>
         </KeyboardAvoidingView>
     );
 };
@@ -79,16 +94,27 @@ const AddUserScreen = () => {
 const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
+        marginTop: "10%",
+        justifyContent: "space-between", // This ensures the footer stays at the bottom
     },
     container: {
         flexGrow: 1,
-        marginTop: 50,
         padding: 20,
         justifyContent: "flex-start",
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 20, // Adds padding around the buttons for a better look
+        borderTopWidth: 1, // Optional border for better visual separation
+        borderColor: '#ccc', // Color for the border
+    },
+    addButton: {
+        flex: 1,
+        marginRight: 10,
+    },
     submitButton: {
-        marginTop: 20,
-        width: "50%",
+        flex: 1,
     },
     overlay: {
         position: "absolute",
@@ -98,11 +124,10 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
-        zIndex: 1000, // Ensure it's on top of other components
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: 1000,
     },
     loadingText: {
-        marginTop: 10,
         color: "#FFF",
         fontSize: 16,
     },
