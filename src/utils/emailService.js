@@ -19,9 +19,9 @@ export const generateAndFetchQRCode = async (user) => {
         const base64QRCode = response?.data?.qrCodeUrl;
 
         if (base64QRCode?.startsWith("data:image/png;base64,")) {
-            const uploadedUrl = await uploadImageToImgBB(base64QRCode);
-            console.log("upload url " + uploadedUrl);
-            return uploadedUrl;
+            //const uploadedUrl = await uploadImageToImgBB(base64QRCode);
+            //console.log("upload url " + uploadedUrl);
+            return base64QRCode;
         }
 
         console.error("QR code generation failed or invalid format.");
@@ -51,24 +51,11 @@ export const sendEmail = async (user, qrCode) => {
         return false;
     }
 
-    const qrCodesPayload = {
-        qr_code2: false,
-        qr_code3: false,
-        qr_code4: false,
-        qr_code5: false,
-        qr_code6: false,
-        qr_code7: false,
-        qr_code8: false,
-        qr_code9: false,
-        qr_code10: false,
-    };
-
     const templateParams = {
         to_name: user.firstName + " " + user.lastName,
         to_email: user.email,
-        ticket_count: user.ticketCount,
-        qr_code1: qrCode,
-        ...qrCodesPayload,
+        ticket_count: 1,
+        qr_code1: qrCode
     };
 
     try {

@@ -60,7 +60,7 @@ export async function scanQR(user) {
 }
 
 export const uploadImageToImgBB = async (base64Image) => {
-    const apiKey = '9a981eca3f280e1599d1d56f9593fa42';
+    const apiKey = 'a1f722771c8c94d01a423782ac3bc36e';
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, ""); // Remove prefix
     const formData = new FormData();
     formData.append('image', cleanBase64);

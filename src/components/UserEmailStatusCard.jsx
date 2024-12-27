@@ -1,9 +1,9 @@
 import React from "react";
-import { Card, Text, Button } from "react-native-paper";
-import { View } from "react-native";
+import { Card, Text } from "react-native-paper";
 import CustomDialog from "./CustomDialog";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import db from "../api/firebase";
+import { generateAndFetchQRCode, sendEmail } from "../utils/emailService";
 
 const UserEmailStatusCard = ({ user, handleSuccess, handleError }) => {
     const [dialogVisible, setDialogVisible] = React.useState(false);

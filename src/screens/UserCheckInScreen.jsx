@@ -21,7 +21,7 @@ function UserCheckInScreen() {
     useEffect(() => {
         const usersQuery = query(
             collection(db, "users"),
-            orderBy("createdAt"),
+            orderBy("createdAt", "desc"),
             orderBy("ticketId")
         );
         const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {

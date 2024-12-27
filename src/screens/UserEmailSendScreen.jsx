@@ -19,7 +19,7 @@ function UserEmailSendScreen() {
     const [modalType, setModalType] = useState("success"); // 'success' or 'error'
 
     useEffect(() => {
-        const usersQuery = query(collection(db, "users"), orderBy("createdAt"), orderBy("ticketId"));
+        const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), orderBy("ticketId"));
         const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
             const usersArray = querySnapshot.docs.map((doc) => ({
                 id: doc.id,
