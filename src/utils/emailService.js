@@ -1,10 +1,22 @@
 import axios from "axios";
 import emailjs from "@emailjs/browser";
 
+// Helper to clean base64 QR code
+const cleanBase64 = (code) => {
+    if (!code || typeof code !== 'string') return '';
+    let cleaned = code.replace(/=3D/g, '=');
+    cleaned = cleaned.replace(/\r?\n|\r/g, '');
+    cleaned = cleaned.replace(/\s+/g, '');
+    if (cleaned.startsWith('data:image/png;base64,')) {
+        cleaned = cleaned.replace('data:image/png;base64,', '');
+    }
+    return cleaned;
+};
+
 export const generateAndFetchQRCode = async (user) => {
     try {
         const response = await axios.post(
-            "https://roofcommunitybackend.onrender.com/api/generate",
+            `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/generate`,
             {
                 firstName: user.firstName,
                 lastName: user.lastName,
@@ -39,90 +51,62 @@ export const generateMultipleQRCodes = async (userGroup) => {
     return qrCodes;
 };
 
-export const sendEmail = async (user, qrCode) => {
+
+export const sendEmail = async (userOrGroup, qrCodesOrSingle) => {
     if (typeof global.location === "undefined") {
         global.location = { href: "https://karinasang.github.io/" };
     }
 
-    if (qrCode === null) {
-        console.error("Failed to generate QR code");
+    // Normalize input
+    let users = Array.isArray(userOrGroup) ? userOrGroup : [userOrGroup];
+    let qrCodes = Array.isArray(qrCodesOrSingle) ? qrCodesOrSingle : [qrCodesOrSingle];
+
+    // Only keep valid QR codes
+    const validQRCodes = qrCodes.filter(code => typeof code === 'string' && code && code !== false);
+    if (validQRCodes.length === 0) {
+        console.error("Failed to generate any valid QR codes");
         return false;
     }
 
-    // Embed QR code in HTML
-    const htmlContent = `
-        <p>Hello ${user.firstName} ${user.lastName},</p>
-        <p>Your ticket QR code is below:</p>
-        <img src='${qrCode}' alt='QR Code' />
-        <p>Thank you for signing up!</p>
-    `;
+    const mainUser = users[0];
 
-    const templateParams = {
-        to_name: user.firstName + " " + user.lastName,
-        to_email: user.email,
-        ticket_count: 1,
-        message_html: htmlContent
-    };
+    // Prepare attachments and HTML referencing cids
+    const attachments = validQRCodes.map((code, idx) => ({
+        filename: `qrcode${idx + 1}.png`,
+        content: cleanBase64(code),
+        encoding: 'base64',
+        contentType: 'image/png',
+        cid: `qrcode${idx + 1}`
+    }));
 
-    try {
-        const response = await emailjs.send(
-            "service_48jph9s",
-            "template_laqn78w",
-            templateParams,
-            {
-                publicKey: "d0frZQtRg__lupUwd",
-            }
-        );
-        console.log("Email successfully sent!", response);
-        return true; // Email sent successfully
-    } catch (error) {
-        console.error("Failed to send email:", error);
-        return false; // Email sending failed
-    }
-};
-
-export const sendEmailMulti = async (userGroup, qrCodes) => {
-    if (typeof global.location === "undefined") {
-        global.location = { href: "https://karinasang.github.io/" };
-    }
-
-    if (qrCodes.length === 0) {
-        console.error("Failed to generate any QR codes");
-        return false;
-    }
-
-    const mainUser = userGroup[0];
-
-    // Embed multiple QR codes in HTML
-    const qrImagesHtml = qrCodes
-        .map((code, idx) => `<img src='${code}' alt='QR Code ${idx + 1}' style='margin:5px;' />`)
+    const qrImagesHtml = attachments
+        .map((att, idx) => `<img src='cid:qrcode${idx + 1}' alt='QR Code ${idx + 1}' style='margin:5px;' />`)
         .join("");
 
     const htmlContent = `
-        <p>Hello ${mainUser.firstName} ${mainUser.lastName},</p>
-        <p>Your ticket QR codes are below:</p>
+        <p>Hi ${mainUser.firstName} ${mainUser.lastName},</p>
+        <p>Your ticket QR code${attachments.length > 1 ? 's are' : ' is'} below:</p>
         ${qrImagesHtml}
-        <p>Thank you for signing up!</p>
+        <p>Have fun!</p>
     `;
 
-    const templateParams = {
-        to_name: mainUser.firstName + " " + mainUser.lastName,
-        to_email: mainUser.email,
-        ticket_count: mainUser.ticketCount,
-        message_html: htmlContent
-    };
-
     try {
-        const response = await emailjs.send(
-            "service_48jph9s",
-            "template_laqn78w",
-            templateParams,
+        const response = await axios.post(
+            `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/send-email`,
             {
-                publicKey: "d0frZQtRg__lupUwd",
+                to_name: mainUser.firstName + " " + mainUser.lastName,
+                to_email: mainUser.email,
+                attachments,
+                html_content: htmlContent
             }
         );
-        console.log("Email successfully sent!", response);
-        return true; // Email sent successfully
+        if (response.data.success) {
+            console.log("Email successfully sent!", response.data);
+            return true;
+        } else {
+            console.error("Failed to send email:", response.data.error);
+            return false;
+        }
     } catch (error) {
         console.error("Failed to send email:", error);
         return false; // Email sending failed

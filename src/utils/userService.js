@@ -1,6 +1,6 @@
 import { collection, addDoc, updateDoc, Timestamp } from "firebase/firestore";
 import db from "../api/firebase";
-import { generateMultipleQRCodes, sendEmailMulti } from "./emailService";
+import { generateMultipleQRCodes, sendEmail } from "./emailService";
 
 export const submitUsers = async (users, email) => {
     if (
@@ -43,10 +43,9 @@ export const submitUsers = async (users, email) => {
 
         const userRefs = await Promise.all(firestorePromises);
 
-        const emailSuccess = await sendEmailMulti(userGroup, qrCodes);
+    const emailSuccess = await sendEmail(userGroup, qrCodes);
 
-        if (emailSuccess) {
-            var i = 0;
+        if (emailSuccess) {            var i = 0;
             const updatePromises = userRefs.map((ref) =>
                 updateDoc(ref, { emailStatus: true })
             );
