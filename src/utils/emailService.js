@@ -1,26 +1,24 @@
 import axios from "axios";
 import emailjs from "@emailjs/browser";
-import { uploadImageToImgBB } from "./qrHelper"; // Assuming qrHelper contains the ImgBB upload function
 
 export const generateAndFetchQRCode = async (user) => {
     try {
-        const response = await axios
-            .post("https://roofcommunitybackend.onrender.com/api/generate", {
+        const response = await axios.post(
+            "https://roofcommunitybackend.onrender.com/api/generate",
+            {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 id: user.userId,
-            })
-            .catch(function (error) {
-                if (error.response) {
-                    return error.response.data;
-                }
-            });
+            }
+        ).catch(function (error) {
+            if (error.response) {
+                return error.response.data;
+            }
+        });
 
         const base64QRCode = response?.data?.qrCodeUrl;
 
         if (base64QRCode?.startsWith("data:image/png;base64,")) {
-            //const uploadedUrl = await uploadImageToImgBB(base64QRCode);
-            //console.log("upload url " + uploadedUrl);
             return base64QRCode;
         }
 
@@ -51,11 +49,19 @@ export const sendEmail = async (user, qrCode) => {
         return false;
     }
 
+    // Embed QR code in HTML
+    const htmlContent = `
+        <p>Hello ${user.firstName} ${user.lastName},</p>
+        <p>Your ticket QR code is below:</p>
+        <img src='${qrCode}' alt='QR Code' />
+        <p>Thank you for signing up!</p>
+    `;
+
     const templateParams = {
         to_name: user.firstName + " " + user.lastName,
         to_email: user.email,
         ticket_count: 1,
-        qr_code1: qrCode
+        message_html: htmlContent
     };
 
     try {
@@ -87,14 +93,23 @@ export const sendEmailMulti = async (userGroup, qrCodes) => {
 
     const mainUser = userGroup[0];
 
+    // Embed multiple QR codes in HTML
+    const qrImagesHtml = qrCodes
+        .map((code, idx) => `<img src='${code}' alt='QR Code ${idx + 1}' style='margin:5px;' />`)
+        .join("");
+
+    const htmlContent = `
+        <p>Hello ${mainUser.firstName} ${mainUser.lastName},</p>
+        <p>Your ticket QR codes are below:</p>
+        ${qrImagesHtml}
+        <p>Thank you for signing up!</p>
+    `;
+
     const templateParams = {
         to_name: mainUser.firstName + " " + mainUser.lastName,
         to_email: mainUser.email,
         ticket_count: mainUser.ticketCount,
-        ...qrCodes.reduce(
-            (acc, code, index) => ({ ...acc, [`qr_code${index + 1}`]: code }),
-            {}
-        ),
+        message_html: htmlContent
     };
 
     try {

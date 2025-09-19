@@ -58,19 +58,3 @@ export async function scanQR(user) {
 
     return message;
 }
-
-export const uploadImageToImgBB = async (base64Image) => {
-    const apiKey = 'a1f722771c8c94d01a423782ac3bc36e';
-    const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, ""); // Remove prefix
-    const formData = new FormData();
-    formData.append('image', cleanBase64);
-
-    try {
-        const response = await axios.post(`https://api.imgbb.com/1/upload?key=${apiKey}`, formData);
-        return response.data.data.url;
-    } catch (error) {
-        console.error('Error uploading image to ImgBB:', error);
-        return null;
-    }
-};
-
