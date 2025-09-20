@@ -6,15 +6,19 @@ import MyTextInput from "./MyTextInput";
 const UserInputList = ({ users, setUsers }) => {
     const inputRefs = useRef([]);
 
+    // Track previous users length to detect addition
+    const prevUsersLength = useRef(users.length);
     useEffect(() => {
-        // Adjust the refs array to match the number of users
         inputRefs.current = inputRefs.current.slice(0, users.length);
-        if (users.length > 0) {
-            // Automatically focus the first name of the last added user
+        for (let i = 0; i < users.length; i++) {
+            if (!inputRefs.current[i]) inputRefs.current[i] = [null, null];
+        }
+        if (users.length > prevUsersLength.current) {
             setTimeout(() => {
-                inputRefs.current[(users.length - 1) * 2]?.focus();
+                inputRefs.current[users.length - 1][0]?.focus();
             }, 100);
         }
+        prevUsersLength.current = users.length;
     }, [users]);
 
     const handleRemoveField = (index) => {
@@ -45,8 +49,11 @@ const UserInputList = ({ users, setUsers }) => {
                     )}
                     <Surface style={styles.surface} elevation={4}>
                         <MyTextInput
-                            ref={(el) => (inputRefs.current[index * 2] = el)}
-                            onChangeText={(value) =>
+                            ref={el => {
+                                if (!inputRefs.current[index]) inputRefs.current[index] = [null, null];
+                                inputRefs.current[index][0] = el;
+                            }}
+                            onChangeText={value =>
                                 handleInputChange(index, "firstName", value)
                             }
                             value={user.firstName}
@@ -55,10 +62,11 @@ const UserInputList = ({ users, setUsers }) => {
                             onFocus={() => handleFocus(index)}
                         />
                         <MyTextInput
-                            ref={(el) =>
-                                (inputRefs.current[index * 2 + 1] = el)
-                            }
-                            onChangeText={(value) =>
+                            ref={el => {
+                                if (!inputRefs.current[index]) inputRefs.current[index] = [null, null];
+                                inputRefs.current[index][1] = el;
+                            }}
+                            onChangeText={value =>
                                 handleInputChange(index, "lastName", value)
                             }
                             value={user.lastName}
