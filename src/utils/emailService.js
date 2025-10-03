@@ -29,7 +29,6 @@ export const generateAndFetchQRCode = async (user) => {
         });
 
         const base64QRCode = response?.data?.qrCodeUrl;
-
         if (base64QRCode?.startsWith("data:image/png;base64,")) {
             return base64QRCode;
         }
@@ -70,9 +69,9 @@ export const sendEmail = async (userOrGroup, qrCodesOrSingle) => {
 
     const mainUser = users[0];
 
-    // Prepare attachments and HTML referencing cids
+    // Prepare attachments and HTML referencing cids with user names
     const attachments = validQRCodes.map((code, idx) => ({
-        filename: `qrcode${idx + 1}.png`,
+        filename: `${users[idx].firstName}_${users[idx].lastName}_qrcode${idx + 1}.png`,
         content: cleanBase64(code),
         encoding: 'base64',
         contentType: 'image/png',
@@ -80,8 +79,8 @@ export const sendEmail = async (userOrGroup, qrCodesOrSingle) => {
     }));
 
     const qrImagesHtml = attachments
-        .map((att, idx) => `<img src='cid:qrcode${idx + 1}' alt='QR Code ${idx + 1}' style='margin:5px;' />`)
-        .join("");
+        .map((att, idx) => `<p>${users[idx].firstName} ${users[idx].lastName}:</p><img src='cid:qrcode${idx + 1}' alt='QR Code ${idx + 1}' style='margin:5px;' />`)
+        .join("<br>");
 
     const htmlContent = `
         <p>Hi ${mainUser.firstName} ${mainUser.lastName},</p>
